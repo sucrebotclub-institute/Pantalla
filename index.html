@@ -466,14 +466,15 @@
   let rutasConDatos = [];
 
   // ── Rotación automática entre categorías ──
-  const TIEMPO_ROTACION = 8000; // 8 segundos por categoría
+  const TIEMPO_ROTACION = 10000; // 10 segundos por categoría
 
   function iniciarAutoRotar() {
     if (autoRotarTimer) clearInterval(autoRotarTimer);
     autoRotarTimer = setInterval(() => {
-      if (rutasConDatos.length <= 1) return;
-      const idx = rutasConDatos.indexOf(categoriaActiva);
-      const siguiente = rutasConDatos[(idx + 1) % rutasConDatos.length];
+      const activas = rutasConDatos; // solo las que tienen datos
+      if (activas.length <= 1) return;
+      const idx = activas.indexOf(categoriaActiva);
+      const siguiente = activas[(idx + 1) % activas.length];
       seleccionarCategoria(siguiente);
     }, TIEMPO_ROTACION);
   }
@@ -613,16 +614,24 @@
       if (estados && typeof estados === 'object') todosEstados = estados;
       if (activos && typeof activos === 'object') todosActivos = activos;
 
-      renderTabs();
+      renderTabs(); // actualiza rutasConDatos
 
-      // Si no hay categoría activa, elegir la primera con datos o la primera en general
       if (!categoriaActiva) {
-        const primera = rutasConDatos[0] || Object.keys(RUTAS_NOMBRE)[0];
-        categoriaActiva = primera;
-        iniciarAutoRotar();
+        // Primera vez: arrancar en la primera categoría con datos, si no hay ninguna mostrar la primera
+        const primera = rutasConDatos[0] || null;
+        if (primera) {
+          categoriaActiva = primera;
+          iniciarAutoRotar();
+        }
+        // Si aún no hay datos, no mostrar ninguna tab activa hasta que lleguen
+      } else if (rutasConDatos.length > 0 && !rutasConDatos.includes(categoriaActiva)) {
+        // La categoría activa quedó sin datos — saltar a la primera con datos
+        categoriaActiva = rutasConDatos[0];
       }
 
-      seleccionarCategoria(categoriaActiva);
+      if (categoriaActiva) {
+        seleccionarCategoria(categoriaActiva);
+      }
     } catch(e) {}
   }
 
